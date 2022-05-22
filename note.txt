@@ -324,4 +324,83 @@ busybox                  0/1     ContainerCreating   0          11s
 nginx-86c57db685-grqft   1/1     Running             0          31m
 nginx-86c57db685-vv7jm   1/1     Running             0          31m
 [root@node-1 k8s.yaml]# kubectl  describe  pod  busybox
+[root@node-1 k8s.yaml]# kubectl  get  pod  -w 
+NAME                     READY   STATUS             RESTARTS   AGE
+busybox                  0/1     CrashLoopBackOff   3          3m16s
+nginx-86c57db685-grqft   1/1     Running            0          34m
+nginx-86c57db685-vv7jm   1/1     Running            0          34m
+busybox                  1/1     Running            4          3m49s
+busybox                  0/1     Error              4          4m1s
+busybox                  0/1     CrashLoopBackOff   4          4m13s
+busybox                  1/1     Running            5          5m29s
+busybox                  0/1     Error              5          5m41s
+busybox                  0/1     CrashLoopBackOff   5          5m54s
+[root@node-1 k8s.yaml]# kubectl  delete -f  testHealthz.yaml 
+pod "busybox" deleted
+[root@node-1 k8s.yaml]# cat   liveness.yaml 
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    test: liveness
+  name: liveness
+spec:
+  restartPolicy: OnFailure
+  containers:
+  - name: liveness
+    image: busybox
+    args:
+    - /bin/sh
+    - -c
+    - touch /tmp/healthy; sleep 30; rm -f /tmp/healthy; sleep 600
+    livenessProbe:
+      exec:
+        command:
+        - cat
+        - /tmp/healthy
+      initialDelaySeconds: 10   # 容器启动 10 秒之后开始检测
+      periodSeconds: 5          # 每隔 5 秒再检测一次
+[root@node-1 k8s.yaml]# kubectl  apply  -f  liveness.yaml 
+[root@node-1 k8s.yaml]# kubectl get pod   -w
+NAME                     READY   STATUS    RESTARTS   AGE
+liveness                 1/1     Running   0          88s
+nginx-86c57db685-grqft   1/1     Running   0          45m
+nginx-86c57db685-vv7jm   1/1     Running   0          45m
+liveness                 1/1     Running   1          93s
+liveness                 1/1     Running   2          3m5s    #restarts 服务不正常重启了几次
+[root@node-1 k8s.yaml]# kubectl  describe  pod liveness
+Events:
+  Type     Reason     Age                  From               Message
+  ----     ------     ----                 ----               -------
+  Normal   Scheduled  4m15s                default-scheduler  Successfully assigned default/liveness to node-2
+  Normal   Pulling    88s (x3 over 4m13s)  kubelet, node-2    Pulling image "busybox"
+  Normal   Pulled     72s (x3 over 3m57s)  kubelet, node-2    Successfully pulled image "busybox"
+  Normal   Created    72s (x3 over 3m57s)  kubelet, node-2    Created container liveness
+  Normal   Started    71s (x3 over 3m56s)  kubelet, node-2    Started container liveness
+  Warning  Unhealthy  29s (x9 over 3m24s)  kubelet, node-2    Liveness probe failed: cat: can't open '/tmp/healthy': No such file or directory
+  Normal   Killing    29s (x3 over 3m14s)  kubelet, node-2    Container liveness failed liveness probe, will be restarted
+[root@node-1 k8s.yaml]# cat  readiness.yaml 
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    test: liveness
+  name: liveness
+spec:
+  restartPolicy: OnFailure
+  containers:
+  - name: liveness
+    image: busybox
+    args:
+    - /bin/sh
+    - -c
+    - touch /tmp/healthy; sleep 30; rm -f /tmp/healthy; sleep 600
+    readinessProbe:    # 这里将livenessProbe换成readinessProbe即可，其它配置都一样
+      exec:
+        command:
+        - cat
+        - /tmp/healthy
+      initialDelaySeconds: 10   # 容器启动 10 秒之后开始检测
+      periodSeconds: 5          # 每隔 5 秒再检测一次
+[root@node-1 k8s.yaml]# kubectl  apply    -f  readiness.yaml 
 
