@@ -145,4 +145,10 @@ nginx-5cf4d8f79-v87ps   1/1     Running   0          4m26s   10.244.1.13   node-
 <hr><center>nginx/1.19.7</center>  #这里看nginx版本改为1.19.7了就是之前的版本
 </body>
 </html>
+[root@node-1 ~]# kubectl  rollout  history deployment  nginx 
+deployment.apps/nginx 
+REVISION  CHANGE-CAUSE
+1         <none>
+3         kubectl set image deployment/nginx nginx=nginx:1.19.1 --record=true
+4         kubectl set image deployment/nginx nginx=nginx:1.19.7 --record=true
 
