@@ -1,0 +1,77 @@
+kubectl create deployment nginx --image=nginx
+kubectl   get   pod   -A  -o  wide
+kubectl   get  pod
+kubectl  get  deployments.apps
+[root@node-1 ~]# kubectl  get  deployments.apps 
+NAME    READY   UP-TO-DATE   AVAILABLE   AGE
+nginx   1/1     1            1           45h
+[root@node-1 ~]# kubectl  get  replicasets.apps 
+NAME               DESIRED   CURRENT   READY   AGE
+nginx-86c57db685   1         1         1       45h
+[root@node-1 ~]# kubectl  get  rs 
+NAME               DESIRED   CURRENT   READY   AGE
+nginx-86c57db685   1         1         1       45h
+[root@node-1 ~]# kubectl  scale -h 
+Examples:
+  # Scale a replicaset named 'foo' to 3.
+  kubectl scale --replicas=3 rs/foo
+[root@node-1 ~]# kubectl  scale deployment nginx  --replicas=2
+deployment.apps/nginx scaled
+[root@node-1 ~]# kubectl  get  pod 
+NAME                     READY   STATUS    RESTARTS   AGE
+nginx-86c57db685-mx59g   1/1     Running   0          11m
+nginx-86c57db685-r67fx   1/1     Running   0          65s
+[root@node-1 ~]# kubectl  get deployments.apps 
+NAME    READY   UP-TO-DATE   AVAILABLE   AGE
+nginx   2/2     2            2           45h
+[root@node-1 ~]# kubectl  get  pod  -o  wide 
+NAME                     READY   STATUS    RESTARTS   AGE   IP            NODE     NOMINATED NODE   READINESS GATES
+nginx-86c57db685-mx59g   1/1     Running   0          11m   10.244.1.10   node-2   <none>           <none>
+nginx-86c57db685-r67fx   1/1     Running   0          98s   10.244.2.17   node-3   <none>           <none>
+[root@node-1 ~]# kubectl  set  image deployment/nginx nginx=nginx:1.19.7 --record
+deployment.apps/nginx image updated
+[root@node-1 ~]# kubectl   get  pod -w     #监控节点创建过程
+NAME                     READY   STATUS              RESTARTS   AGE
+nginx-5cf4d8f79-2cmgx    0/1     ContainerCreating   0          37s
+nginx-86c57db685-mx59g   1/1     Running             0          16m
+nginx-86c57db685-r67fx   1/1     Running             0          6m47s
+[root@node-1 ~]# kubectl   get  pod  -o  wide 
+NAME                     READY   STATUS              RESTARTS   AGE     IP            NODE     NOMINATED NODE   READINESS GATES
+nginx-5cf4d8f79-2cmgx    1/1     Running             0          2m5s    10.244.1.11   node-2   <none>           <none>
+nginx-5cf4d8f79-vdh52    0/1     ContainerCreating   0          19s     <none>        node-3   <none>           <none>
+nginx-86c57db685-r67fx   1/1     Running             0          8m15s   10.244.2.17   node-3   <none>           <none>
+[root@node-1 ~]# curl  10.244.1.11
+<!DOCTYPE html>
+<html>
+<head>
+<title>Welcome to nginx!</title>
+<style>
+    body {
+        width: 35em;
+        margin: 0 auto;
+        font-family: Tahoma, Verdana, Arial, sans-serif;
+    }
+</style>
+</head>
+<body>
+<h1>Welcome to nginx!</h1>
+<p>If you see this page, the nginx web server is successfully installed and
+working. Further configuration is required.</p>
+
+<p>For online documentation and support please refer to
+<a href="http://nginx.org/">nginx.org</a>.<br/>
+Commercial support is available at
+<a href="http://nginx.com/">nginx.com</a>.</p>
+
+<p><em>Thank you for using nginx.</em></p>
+</body>
+</html>
+[root@node-1 ~]# curl  10.244.1.11/1
+<html>
+<head><title>404 Not Found</title></head>
+<body>
+<center><h1>404 Not Found</h1></center>
+<hr><center>nginx/1.19.7</center>   ####这里能看到nginx镜像版本
+</body>
+</html>
+
