@@ -164,4 +164,17 @@ NAME     STATUS                     ROLES    AGE   VERSION
 node-1   Ready,SchedulingDisabled   master   47h   v1.17.0
 node-2   Ready                      worker   47h   v1.17.0
 node-3   Ready                      worker   47h   v1.17.0
+[root@node-1 ~]# kubectl  cordon node-2
+node/node-2 cordoned
+[root@node-1 ~]# kubectl  get  node 
+NAME     STATUS                     ROLES    AGE   VERSION
+node-1   Ready,SchedulingDisabled   master   47h   v1.17.0
+node-2   Ready,SchedulingDisabled   worker   47h   v1.17.0
+node-3   Ready                      worker   47h   v1.17.0
+[root@node-1 ~]# kubectl  drain  -h
+[root@node-1 ~]# kubectl  drain  node-2 --ignore-daemonsets --force  --delete-local-data 
+node/node-2 already cordoned
+evicting pod "metrics-server-6589f84c7-xq8bq"
+pod/metrics-server-6589f84c7-xq8bq evicted
+node/node-2 evicted
 
