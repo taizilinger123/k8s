@@ -151,4 +151,17 @@ REVISION  CHANGE-CAUSE
 1         <none>
 3         kubectl set image deployment/nginx nginx=nginx:1.19.1 --record=true
 4         kubectl set image deployment/nginx nginx=nginx:1.19.7 --record=true
+[root@node-1 ~]# kubectl  get  node 
+NAME     STATUS   ROLES    AGE   VERSION
+node-1   Ready    master   47h   v1.17.0
+node-2   Ready    worker   47h   v1.17.0
+node-3   Ready    worker   47h   v1.17.0
+[root@node-1 ~]# kubectl  cordon node-1      #打个污点
+node/node-1 cordoned
+[root@node-1 ~]# 
+[root@node-1 ~]# kubectl  get  node 
+NAME     STATUS                     ROLES    AGE   VERSION
+node-1   Ready,SchedulingDisabled   master   47h   v1.17.0
+node-2   Ready                      worker   47h   v1.17.0
+node-3   Ready                      worker   47h   v1.17.0
 
