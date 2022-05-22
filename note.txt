@@ -177,4 +177,7 @@ node/node-2 already cordoned
 evicting pod "metrics-server-6589f84c7-xq8bq"
 pod/metrics-server-6589f84c7-xq8bq evicted
 node/node-2 evicted
-
+[root@node-1 ~]# kubectl  get  pod  -o wide 
+NAME                    READY   STATUS    RESTARTS   AGE     IP            NODE     NOMINATED NODE   READINESS GATES
+nginx-5cf4d8f79-v4jhf   1/1     Running   0          45m     10.244.2.20   node-3   <none>           <none>
+nginx-5cf4d8f79-ztnz7   1/1     Running   0          5m42s   10.244.2.21   node-3   <none>           <none>             #可以看到都在node-3这个节点上了，打了污点和驱逐node-2
