@@ -90,4 +90,17 @@ deployment.apps/nginx
 REVISION  CHANGE-CAUSE
 1         <none>
 2         kubectl set image deployment/nginx nginx=nginx:1.19.7 --record=true
+[root@node-1 ~]# kubectl  set  image deployment/nginx nginx=nginx:1.19.1 --record
+deployment.apps/nginx image updated
+[root@node-1 ~]# kubectl   get  pod   -w
+NAME                     READY   STATUS              RESTARTS   AGE
+nginx-5cf4d8f79-2cmgx    1/1     Running             0          62m
+nginx-5cf4d8f79-vdh52    1/1     Running             0          60m
+nginx-5dd4b6cddf-qxml2   0/1     ContainerCreating   0          8s
+[root@node-1 ~]# kubectl  rollout  history deployment  nginx 
+deployment.apps/nginx 
+REVISION  CHANGE-CAUSE
+1         <none>
+2         kubectl set image deployment/nginx nginx=nginx:1.19.7 --record=true
+3         kubectl set image deployment/nginx nginx=nginx:1.19.1 --record=true
 
