@@ -181,3 +181,113 @@ node/node-2 evicted
 NAME                    READY   STATUS    RESTARTS   AGE     IP            NODE     NOMINATED NODE   READINESS GATES
 nginx-5cf4d8f79-v4jhf   1/1     Running   0          45m     10.244.2.20   node-3   <none>           <none>
 nginx-5cf4d8f79-ztnz7   1/1     Running   0          5m42s   10.244.2.21   node-3   <none>           <none>             #可以看到都在node-3这个节点上了，打了污点和驱逐node-2
+[root@node-1 ~]# kubectl  get  node 
+NAME     STATUS                     ROLES    AGE   VERSION
+node-1   Ready,SchedulingDisabled   master   47h   v1.17.0
+node-2   Ready,SchedulingDisabled   worker   47h   v1.17.0
+node-3   Ready                      worker   47h   v1.17.0
+[root@node-1 ~]# kubectl  uncordon node-2            #去除打的污点
+node/node-2 uncordoned
+[root@node-1 ~]# kubectl  get  node 
+NAME     STATUS                     ROLES    AGE   VERSION
+node-1   Ready,SchedulingDisabled   master   47h   v1.17.0
+node-2   Ready                      worker   47h   v1.17.0
+node-3   Ready                      worker   47h   v1.17.0
+[root@node-1 ~]# kubectl  create deployment nginx --image=nginx --dry-run -o yaml    #yaml文件编写格式生成
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: nginx
+  name: nginx
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - image: nginx
+        name: nginx
+        resources: {}
+status: {}
+[root@node-1 ~]# kubectl  create deployment nginx --image=nginx --dry-run -o yaml > nginx.yaml 
+[root@node-1 ~]# cat  nginx.yaml 
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: nginx
+  name: nginx
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - image: nginx
+        name: nginx
+        resources: {}
+status: {}
+[root@node-1 ~]# kubectl  delete  deployment  nginx 
+deployment.apps "nginx" deleted
+[root@node-1 ~]# kubectl  get  rs
+No resources found in default namespace.
+[root@node-1 ~]# kubectl  get   pod 
+No resources found in default namespace.
+[root@node-1 ~]# kubectl  get  deployments.apps 
+No resources found in default namespace.
+##########################################################
+[root@node-1 k8s.yaml]# cat  nginx.yaml 
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: nginx
+  name: nginx
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: nginx
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - image: nginx
+        name: nginx
+        resources: {}
+status: {}
+[root@node-1 k8s.yaml]# kubectl  apply  -f  nginx.yaml  --record
+deployment.apps/nginx created
+[root@node-1 k8s.yaml]# kubectl  get  deployments.apps 
+NAME    READY   UP-TO-DATE   AVAILABLE   AGE
+nginx   2/2     2            2           36s
+[root@node-1 k8s.yaml]# kubectl  get  rs
+NAME               DESIRED   CURRENT   READY   AGE
+nginx-86c57db685   2         2         2       41s
+[root@node-1 k8s.yaml]# kubectl  get   pod -o  wide 
+NAME                     READY   STATUS    RESTARTS   AGE   IP            NODE     NOMINATED NODE   READINESS GATES
+nginx-86c57db685-grqft   1/1     Running   0          46s   10.244.2.22   node-3   <none>           <none>
+nginx-86c57db685-vv7jm   1/1     Running   0          46s   10.244.1.14   node-2   <none>           <none>
+
