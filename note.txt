@@ -290,4 +290,38 @@ nginx-86c57db685   2         2         2       41s
 NAME                     READY   STATUS    RESTARTS   AGE   IP            NODE     NOMINATED NODE   READINESS GATES
 nginx-86c57db685-grqft   1/1     Running   0          46s   10.244.2.22   node-3   <none>           <none>
 nginx-86c57db685-vv7jm   1/1     Running   0          46s   10.244.1.14   node-2   <none>           <none>
+############################################################################
+[root@node-1 k8s.yaml]# kubectl run  busybox --image=busybox --dry-run=client -o yaml > testHealthz.yaml 
+Error: invalid argument "client" for "--dry-run" flag: strconv.ParseBool: parsing "client": invalid syntax
+See 'kubectl run --help' for usage.
+[root@node-1 k8s.yaml]# kubectl run  busybox --image=busybox --dry-run=1 -o yaml > testHealthz.yaml 
+kubectl run --generator=deployment/apps.v1 is DEPRECATED and will be removed in a future version. Use kubectl run --generator=run-pod/v1 or kubectl create instead.
+[root@node-1 k8s.yaml]# cat   testHealthz.yaml 
+apiVersion: v1
+kind: Pod
+metadata:
+  creationTimestamp: null
+  labels:
+    run: busybox
+  name: busybox
+spec:
+  containers:
+  - image: busybox
+    name: busybox
+    resources: {}
+    args:
+    - /bin/sh
+    - -c
+    - sleep 10; exit 1       # 并添加pod运行指定脚本命令，模拟容器启动10秒后发生故障，退出状态码为1
+  dnsPolicy: ClusterFirst
+  restartPolicy: OnFailure # 将默认的Always修改为OnFailure
+status: {}
+[root@node-1 k8s.yaml]# kubectl apply  -f  testHealthz.yaml 
+pod/busybox created
+[root@node-1 k8s.yaml]# kubectl  get  pod 
+NAME                     READY   STATUS              RESTARTS   AGE
+busybox                  0/1     ContainerCreating   0          11s
+nginx-86c57db685-grqft   1/1     Running             0          31m
+nginx-86c57db685-vv7jm   1/1     Running             0          31m
+[root@node-1 k8s.yaml]# kubectl  describe  pod  busybox
 
