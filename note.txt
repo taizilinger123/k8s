@@ -1,3 +1,11 @@
+###################################################
+[root@node-2 k8s]# cat gitPush.sh 
+#!/bin/bash 
+DATE=`date +%Y%m%d`
+git  add .
+git commit -m  "$DATE"
+git  push  git@github.com:taizilinger123/k8s.git 
+##################################################
 kubectl create deployment nginx --image=nginx
 kubectl   get   pod   -A  -o  wide
 kubectl   get  pod
@@ -403,4 +411,5 @@ spec:
       initialDelaySeconds: 10   # 容器启动 10 秒之后开始检测
       periodSeconds: 5          # 每隔 5 秒再检测一次
 [root@node-1 k8s.yaml]# kubectl  apply    -f  readiness.yaml 
+
 
