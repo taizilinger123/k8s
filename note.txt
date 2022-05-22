@@ -74,4 +74,20 @@ Commercial support is available at
 <hr><center>nginx/1.19.7</center>   ####这里能看到nginx镜像版本
 </body>
 </html>
+[root@node-1 ~]# kubectl  describe deployments.apps  nginx 
+OldReplicaSets:  <none>
+NewReplicaSet:   nginx-5cf4d8f79 (2/2 replicas created)
+Events:
+  Type    Reason             Age   From                   Message
+  ----    ------             ----  ----                   -------
+  Normal  ScalingReplicaSet  59m   deployment-controller  Scaled up replica set nginx-86c57db685 to 2
+  Normal  ScalingReplicaSet  53m   deployment-controller  Scaled up replica set nginx-5cf4d8f79 to 1
+  Normal  ScalingReplicaSet  51m   deployment-controller  Scaled down replica set nginx-86c57db685 to 1
+  Normal  ScalingReplicaSet  51m   deployment-controller  Scaled up replica set nginx-5cf4d8f79 to 2
+  Normal  ScalingReplicaSet  50m   deployment-controller  Scaled down replica set nginx-86c57db685 to 0
+[root@node-1 ~]# kubectl  rollout  history deployment  nginx 
+deployment.apps/nginx 
+REVISION  CHANGE-CAUSE
+1         <none>
+2         kubectl set image deployment/nginx nginx=nginx:1.19.7 --record=true
 
