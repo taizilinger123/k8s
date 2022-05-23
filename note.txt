@@ -497,3 +497,7 @@ Edit cancelled, no changes made.
       maxSurge: 35%
       maxUnavailable: 35%
     type: RollingUpdate
+[root@node-1 k8s.yaml]# kubectl describe  deployments.apps mytest  |  grep  Replicas
+Replicas:               10 desired | 7 updated | 14 total | 7 available | 7 unavailable
+  Available      True    MinimumReplicasAvailable
+10+10*35%=13.5=14个
