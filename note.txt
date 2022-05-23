@@ -511,4 +511,53 @@ REVISION  CHANGE-CAUSE
 [root@node-1 k8s.yaml]# kubectl rollout undo deployment mytest --to-revision=1 
 deployment.apps/mytest rolled back
 [root@node-1 k8s.yaml]# kubectl  get   pod  -w 
-
+#############################################service############################
+[root@node-1 k8s.yaml]# kubectl expose deployment nginx --port=80 --target-port=80 --dry-run=client -o yaml  
+Error: invalid argument "client" for "--dry-run" flag: strconv.ParseBool: parsing "client": invalid syntax
+See 'kubectl expose --help' for usage.
+[root@node-1 k8s.yaml]# kubectl expose deployment nginx --port=80 --target-port=80 --dry-run=1 -o yaml  
+apiVersion: v1
+kind: Service
+metadata:
+  creationTimestamp: null
+  labels:
+    app: nginx
+  name: nginx
+spec:
+  ports:
+  - port: 80
+    protocol: TCP
+    targetPort: 80
+  selector:
+    app: nginx
+status:
+  loadBalancer: {}
+[root@node-1 k8s.yaml]# kubectl expose deployment nginx --port=80 --target-port=80  
+Error from server (AlreadyExists): services "nginx" already exists
+[root@node-1 k8s.yaml]# kubectl  delete  deployment  nginx  
+deployment.apps "nginx" deleted
+[root@node-1 k8s.yaml]# kubectl  get   pod 
+[root@node-1 k8s.yaml]#  kubectl create deployment nginx --image=nginx  
+deployment.apps/nginx created
+[root@node-1 k8s.yaml]# kubectl expose deployment nginx --port=80 --target-port=80  
+Error from server (AlreadyExists): services "nginx" already exists
+[root@node-1 k8s.yaml]# kubectl  get  svc
+NAME         TYPE        CLUSTER-IP    EXTERNAL-IP   PORT(S)        AGE
+kubernetes   ClusterIP   10.96.0.1     <none>        443/TCP        2d23h
+nginx        NodePort    10.96.95.82   <none>        80:30800/TCP   2d23h
+[root@node-1 k8s.yaml]# kubectl  delete  services nginx 
+service "nginx" deleted
+[root@node-1 k8s.yaml]# kubectl  get  svc
+NAME         TYPE        CLUSTER-IP   EXTERNAL-IP   PORT(S)   AGE
+kubernetes   ClusterIP   10.96.0.1    <none>        443/TCP   2d23h
+[root@node-1 k8s.yaml]# kubectl expose deployment nginx --port=80 --target-port=80  
+service/nginx exposed
+[root@node-1 k8s.yaml]# kubectl  get  svc
+NAME         TYPE        CLUSTER-IP     EXTERNAL-IP   PORT(S)   AGE
+kubernetes   ClusterIP   10.96.0.1      <none>        443/TCP   2d23h
+nginx        ClusterIP   10.96.13.195   <none>        80/TCP    2s
+[root@node-1 k8s.yaml]# kubectl  delete  -f  myapp-v2.yaml 
+deployment.apps "mytest" deleted
+[root@node-1 k8s.yaml]# kubectl  get  pod 
+NAME                     READY   STATUS    RESTARTS   AGE
+nginx-86c57db685-8rk9m   1/1     Running   0          4m1s
