@@ -501,3 +501,14 @@ Edit cancelled, no changes made.
 Replicas:               10 desired | 7 updated | 14 total | 7 available | 7 unavailable
   Available      True    MinimumReplicasAvailable
 10+10*35%=13.5=14个
+10-10*35%=6.5=7个
+[root@node-1 k8s.yaml]# kubectl rollout history deployment mytest    
+deployment.apps/mytest 
+REVISION  CHANGE-CAUSE
+1         <none>
+2         kubectl apply --filename=myapp-v2.yaml --record=true
+
+[root@node-1 k8s.yaml]# kubectl rollout undo deployment mytest --to-revision=1 
+deployment.apps/mytest rolled back
+[root@node-1 k8s.yaml]# kubectl  get   pod  -w 
+
