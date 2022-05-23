@@ -411,5 +411,89 @@ spec:
       initialDelaySeconds: 10   # 容器启动 10 秒之后开始检测
       periodSeconds: 5          # 每隔 5 秒再检测一次
 [root@node-1 k8s.yaml]# kubectl  apply    -f  readiness.yaml 
-
-
+[root@node-1 k8s.yaml]# cat  myapp-v1.yaml 
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mytest
+spec:
+  replicas: 10     # 这里准备10个数量的pod
+  selector:
+    matchLabels:
+      app: mytest
+  template:
+    metadata:
+      labels:
+        app: mytest
+    spec:
+      containers:
+      - name: mytest
+        image: busybox
+        args:
+        - /bin/sh
+        - -c
+        - sleep 10; touch /tmp/healthy; sleep 30000
+        readinessProbe:
+          exec:
+            command:
+            - cat
+            - /tmp/healthy
+          initialDelaySeconds: 10
+          periodSeconds: 5
+[root@node-1 k8s.yaml]# kubectl  apply  -f   myapp-v1.yaml
+[root@node-1 k8s.yaml]# cat  myapp-v2.yaml 
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mytest
+spec:
+  strategy:
+    rollingUpdate:
+      maxSurge: 35%   # 滚动更新的副本总数最大值(以10的基数为例)：10 + 10 * 35% = 13.5 --> 14
+      maxUnavailable: 35%  # 可用副本数最大值(默认值两个都是25%)： 10 - 10 * 35% = 6.5  --> 7
+  replicas: 10
+  selector:
+    matchLabels:
+      app: mytest
+  template:
+    metadata:
+      labels:
+        app: mytest
+    spec:
+      containers:
+      - name: mytest
+        image: busybox
+        args:
+        - /bin/sh
+        - -c
+        - sleep 30000   # 可见这里并没有生成/tmp/healthy这个文件，所以下面的检测必然失败
+        readinessProbe:
+          exec:
+            command:
+            - cat
+            - /tmp/healthy
+          initialDelaySeconds: 10
+          periodSeconds: 5
+[root@node-1 k8s.yaml]# kubectl   apply  -f  myapp-v2.yaml   --record 
+deployment.apps/mytest configured
+[root@node-1 k8s.yaml]# kubectl   rollout  history  deployment   mytest
+deployment.apps/mytest 
+REVISION  CHANGE-CAUSE
+1         <none>
+2         kubectl apply --filename=myapp-v2.yaml --record=true
+[root@node-1 k8s.yaml]# kubectl  get   deployments.apps   mytest
+NAME     READY   UP-TO-DATE   AVAILABLE   AGE
+mytest   7/10    7            7           9m13s
+[root@node-1 k8s.yaml]# kubectl  describe   deployments.apps mytest 
+[root@node-1 k8s.yaml]# kubectl  get   deployments.apps 
+mytest  nginx   
+[root@node-1 k8s.yaml]# kubectl  get   deployments.apps mytest 
+NAME     READY   UP-TO-DATE   AVAILABLE   AGE
+mytest   7/10    7            7           11m
+[root@node-1 k8s.yaml]# kubectl  edit    deployments.apps mytest 
+Edit cancelled, no changes made.
+  strategy:
+    rollingUpdate:
+      maxSurge: 35%
+      maxUnavailable: 35%
+    type: RollingUpdate
