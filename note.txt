@@ -561,3 +561,149 @@ deployment.apps "mytest" deleted
 [root@node-1 k8s.yaml]# kubectl  get  pod 
 NAME                     READY   STATUS    RESTARTS   AGE
 nginx-86c57db685-8rk9m   1/1     Running   0          4m1s
+[root@node-1 k8s.yaml]# kubectl  get  svc
+NAME         TYPE        CLUSTER-IP     EXTERNAL-IP   PORT(S)   AGE
+kubernetes   ClusterIP   10.96.0.1      <none>        443/TCP   2d23h
+nginx        ClusterIP   10.96.13.195   <none>        80/TCP    3m57s
+[root@node-1 k8s.yaml]# curl  10.96.13.195 
+[root@node-1 k8s.yaml]# kubectl  get   endpoints
+NAME         ENDPOINTS         AGE
+kubernetes   10.0.1.201:6443   2d23h
+nginx        10.244.1.32:80    6m39s
+[root@node-1 k8s.yaml]# kubectl  get  pod  -o  wide 
+NAME                     READY   STATUS    RESTARTS   AGE     IP            NODE     NOMINATED NODE   READINESS GATES
+nginx-86c57db685-8rk9m   1/1     Running   0          7m30s   10.244.1.32   node-2   <none>           <none>
+[root@node-1 k8s.yaml]# kubectl exec -it  nginx-86c57db685-8rk9m  -- bash 
+root@nginx-86c57db685-8rk9m:/# echo 1111 > /usr/share/nginx/html/index.html
+root@nginx-86c57db685-8rk9m:/# exit
+exit
+[root@node-1 k8s.yaml]# curl  10.96.13.195 
+1111
+[root@node-1 k8s.yaml]# kubectl get  svc nginx -o  yaml 
+apiVersion: v1
+kind: Service
+metadata:
+  creationTimestamp: "2022-05-23T02:16:22Z"
+  labels:
+    app: nginx
+  name: nginx
+  namespace: default
+  resourceVersion: "539448"
+  selfLink: /api/v1/namespaces/default/services/nginx
+  uid: 45bd38fc-7b0d-4dd3-9dff-f676c4a9989a
+spec:
+  clusterIP: 10.96.13.195
+  ports:
+  - port: 80
+    protocol: TCP
+    targetPort: 80
+  selector:
+    app: nginx
+  sessionAffinity: None
+  type: ClusterIP
+status:
+  loadBalancer: {}
+[root@node-1 k8s.yaml]#  kubectl patch svc nginx -p '{"spec":{"type":"NodePort"}}'
+service/nginx patched
+[root@node-1 k8s.yaml]# kubectl get  svc nginx -o  yaml 
+apiVersion: v1
+kind: Service
+metadata:
+  creationTimestamp: "2022-05-23T02:16:22Z"
+  labels:
+    app: nginx
+  name: nginx
+  namespace: default
+  resourceVersion: "542199"
+  selfLink: /api/v1/namespaces/default/services/nginx
+  uid: 45bd38fc-7b0d-4dd3-9dff-f676c4a9989a
+spec:
+  clusterIP: 10.96.13.195
+  externalTrafficPolicy: Cluster
+  ports:
+  - nodePort: 31675
+    port: 80
+    protocol: TCP
+    targetPort: 80
+  selector:
+    app: nginx
+  sessionAffinity: None
+  type: NodePort                #主要改的是这里的类型
+status:
+  loadBalancer: {}
+[root@node-1 k8s.yaml]# kubectl get  svc
+NAME         TYPE        CLUSTER-IP     EXTERNAL-IP   PORT(S)        AGE
+kubernetes   ClusterIP   10.96.0.1      <none>        443/TCP        3d
+nginx        NodePort    10.96.13.195   <none>        80:31675/TCP   19m  #多了端口31675和TYPE类型也改为NodePort
+[root@node-1 k8s.yaml]# curl  http://10.0.1.201:31675
+1111
+谷歌浏览器里直接输入http://10.0.1.201:31675/也是可以看到1111
+[root@node-1 k8s.yaml]# kubectl  describe  svc  nginx 
+Name:                     nginx
+Namespace:                default
+Labels:                   app=nginx
+Annotations:              <none>
+Selector:                 app=nginx
+Type:                     NodePort
+IP:                       10.96.13.195
+Port:                     <unset>  80/TCP
+TargetPort:               80/TCP
+NodePort:                 <unset>  31675/TCP
+Endpoints:                10.244.1.32:80
+Session Affinity:         None
+External Traffic Policy:  Cluster
+Events:                   <none>
+[root@node-1 k8s.yaml]# find  /  -name  kube-proxy
+/var/lib/docker/overlay2/bf91d9a3690771ef22bc1e61beac054da51c81e5a69e4cee9b0f3989e06d94b9/diff/usr/local/bin/kube-proxy
+/var/lib/docker/overlay2/71a0e967d26c8bdf230265744f9c09cdb61f85eecfdb19e0d37753785a475e5a/diff/var/lib/kube-proxy
+/var/lib/docker/overlay2/474ad716b5d827a09d0c49e6a142a2e402c734d7a2fd56595ec4672ce444f0b0/diff/var/lib/kube-proxy
+/var/lib/docker/overlay2/474ad716b5d827a09d0c49e6a142a2e402c734d7a2fd56595ec4672ce444f0b0/merged/usr/local/bin/kube-proxy
+/var/lib/docker/overlay2/474ad716b5d827a09d0c49e6a142a2e402c734d7a2fd56595ec4672ce444f0b0/merged/var/lib/kube-proxy
+/var/lib/kubelet/pods/70778556-8d6e-4e8c-9181-56f0f9ab5441/volumes/kubernetes.io~configmap/kube-proxy
+/var/lib/kubelet/pods/70778556-8d6e-4e8c-9181-56f0f9ab5441/containers/kube-proxy
+/var/log/pods/kube-system_kube-proxy-dm6ns_70778556-8d6e-4e8c-9181-56f0f9ab5441/kube-proxy
+[root@node-1 ~]# cd   /var/lib/kubelet/pods/70778556-8d6e-4e8c-9181-56f0f9ab5441/volumes/kubernetes.io~configmap/kube-proxy 
+[root@node-1 kube-proxy]# ls
+config.conf  kubeconfig.conf
+[root@node-1 kube-proxy]# cat  config.conf 
+apiVersion: kubeproxy.config.k8s.io/v1alpha1
+bindAddress: 0.0.0.0
+clientConnection:
+  acceptContentTypes: ""
+  burst: 0
+  contentType: ""
+  kubeconfig: /var/lib/kube-proxy/kubeconfig.conf
+  qps: 0
+clusterCIDR: 10.244.0.0/16
+configSyncPeriod: 0s
+conntrack:
+  maxPerCore: null
+  min: null
+  tcpCloseWaitTimeout: null
+  tcpEstablishedTimeout: null
+enableProfiling: false
+healthzBindAddress: ""
+hostnameOverride: ""
+iptables:
+  masqueradeAll: false
+  masqueradeBit: null
+  minSyncPeriod: 0s
+  syncPeriod: 0s
+ipvs:
+  excludeCIDRs: null
+  minSyncPeriod: 0s
+  scheduler: ""
+  strictARP: false
+  syncPeriod: 0s
+kind: KubeProxyConfiguration
+metricsBindAddress: ""
+mode: ""
+nodePortAddresses: null
+oomScoreAdj: null
+portRange: ""
+udpIdleTimeout: 0s
+winkernel:
+  enableDSR: false
+  networkName: ""
+  sourceVip: ""
+
