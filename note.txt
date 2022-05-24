@@ -574,7 +574,9 @@ nginx        10.244.1.32:80    6m39s
 NAME                     READY   STATUS    RESTARTS   AGE     IP            NODE     NOMINATED NODE   READINESS GATES
 nginx-86c57db685-8rk9m   1/1     Running   0          7m30s   10.244.1.32   node-2   <none>           <none>
 [root@node-1 k8s.yaml]# kubectl exec -it  nginx-86c57db685-8rk9m  -- bash 
+[root@node-1 ~]# kubectl  exec  -it  nginx-86c57db685-pv2j5  -- bash 
 root@nginx-86c57db685-8rk9m:/# echo 1111 > /usr/share/nginx/html/index.html
+root@nginx-86c57db685-pv2j5:/# echo 3333 > /usr/share/nginx/html/index.html
 root@nginx-86c57db685-8rk9m:/# exit
 exit
 [root@node-1 k8s.yaml]# curl  10.96.13.195 
@@ -637,6 +639,14 @@ kubernetes   ClusterIP   10.96.0.1      <none>        443/TCP        3d
 nginx        NodePort    10.96.13.195   <none>        80:31675/TCP   19m  #多了端口31675和TYPE类型也改为NodePort
 [root@node-1 k8s.yaml]# curl  http://10.0.1.201:31675
 1111
+[root@node-1 ~]# curl  10.0.1.202:31675 
+1111
+[root@node-1 ~]# curl  10.0.1.202:31675 
+3333
+[root@node-1 ~]# curl  10.0.1.203:31675 
+1111
+[root@node-1 ~]# curl  10.0.1.203:31675 
+3333
 谷歌浏览器里直接输入http://10.0.1.201:31675/也是可以看到1111
 [root@node-1 k8s.yaml]# kubectl  describe  svc  nginx 
 Name:                     nginx
@@ -721,5 +731,5 @@ nginx-86c57db685-pv2j5   1/1     Running   0          43s   10.244.2.34   node-3
 IP Virtual Server version 1.2.1 (size=4096)
 Prot LocalAddress:Port Scheduler Flags
   -> RemoteAddress:Port           Forward Weight ActiveConn InActConn
-
-
+[root@node-1 ~]#  kubectl run -it --rm busybox --image=busybox -- sh 
+/ # ping nginx.default
