@@ -706,4 +706,20 @@ winkernel:
   enableDSR: false
   networkName: ""
   sourceVip: ""
+[root@node-1 ~]# kubectl  scale deployment nginx  --replicas=2
+deployment.apps/nginx scaled
+[root@node-1 ~]# kubectl  get pod  -w 
+NAME                     READY   STATUS              RESTARTS   AGE
+nginx-86c57db685-8rk9m   1/1     Running             0          38h
+nginx-86c57db685-pv2j5   0/1     ContainerCreating   0          8s
+nginx-86c57db685-pv2j5   1/1     Running             0          18s
+[root@node-1 ~]# kubectl  get pod  -o wide 
+NAME                     READY   STATUS    RESTARTS   AGE   IP            NODE     NOMINATED NODE   READINESS GATES
+nginx-86c57db685-8rk9m   1/1     Running   0          38h   10.244.1.32   node-2   <none>           <none>
+nginx-86c57db685-pv2j5   1/1     Running   0          43s   10.244.2.34   node-3   <none>           <none>
+[root@node-1 ~]# ipvsadm  -ln
+IP Virtual Server version 1.2.1 (size=4096)
+Prot LocalAddress:Port Scheduler Flags
+  -> RemoteAddress:Port           Forward Weight ActiveConn InActConn
+
 
