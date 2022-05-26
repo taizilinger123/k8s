@@ -845,4 +845,49 @@ Serving HTTP on 0.0.0.0 port 9999 ...
 IP Virtual Server version 1.2.1 (size=4096)
 Prot LocalAddress:Port Scheduler Flags
   -> RemoteAddress:Port           Forward Weight ActiveConn InActConn
+[root@node-1 scripts]# kubectl scale deployment nginx --replicas=1
+[root@node-1 scripts]# kubectl  get  pod   -o  wide 
+NAME                     READY   STATUS    RESTARTS   AGE     IP            NODE     NOMINATED NODE   READINESS GATES
+nginx-86c57db685-8rk9m   1/1     Running   0          3d13h   10.244.1.32   node-2   <none>           <none>
+[root@node-1 scripts]# kubectl get  svc
+NAME         TYPE        CLUSTER-IP     EXTERNAL-IP   PORT(S)        AGE
+kubernetes   ClusterIP   10.96.0.1      <none>        443/TCP        6d13h
+mysvc        ClusterIP   10.96.164.87   <none>        80/TCP         46h
+nginx        NodePort    10.96.13.195   <none>        80:31675/TCP   3d13h
+[root@node-1 scripts]# curl  10.0.1.203:31675
+1111
+[root@node-1 scripts]# kubectl  logs --tail=1 nginx-86c57db685-8rk9m 
+10.244.2.0 - - [26/May/2022:16:14:30 +0000] "GET / HTTP/1.1" 200 5 "-" "curl/7.29.0" "-"
+[root@node-1 scripts]# curl  10.0.1.201:31675
+1111
+[root@node-1 scripts]# kubectl  logs --tail=1 nginx-86c57db685-8rk9m 
+10.244.0.0 - - [26/May/2022:16:15:34 +0000] "GET / HTTP/1.1" 200 5 "-" "curl/7.29.0" "-"
+[root@node-1 scripts]#  kubectl patch svc nginx -p '{"spec":{"externalTrafficPolicy":"Local"}}'
+service/nginx patched
+[root@node-1 scripts]# kubectl get svc nginx -o yaml
+apiVersion: v1
+kind: Service
+metadata:
+  creationTimestamp: "2022-05-23T02:16:22Z"
+  labels:
+    app: nginx
+  name: nginx
+  namespace: default
+  resourceVersion: "1281736"
+  selfLink: /api/v1/namespaces/default/services/nginx
+  uid: 45bd38fc-7b0d-4dd3-9dff-f676c4a9989a
+spec:
+  clusterIP: 10.96.13.195
+  externalTrafficPolicy: Local
+  ports:
+  - nodePort: 31675
+    port: 80
+    protocol: TCP
+    targetPort: 80
+  selector:
+    app: nginx
+  sessionAffinity: None
+  type: NodePort
+status:
+  loadBalancer: {}
 
